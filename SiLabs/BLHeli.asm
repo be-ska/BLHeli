@@ -581,7 +581,9 @@ HTIRC_Hummingbird_20A_Multi 		EQU 285
 HTIRC_Hummingbird_30A_Pro_Main	EQU 286   
 HTIRC_Hummingbird_30A_Pro_Tail	EQU 287  
 HTIRC_Hummingbird_30A_Pro_Multi	EQU 288   
-  
+Align_M460_Main					EQU 289   
+Align_M460_Tail 				EQU 290  
+Align_M460_Multi 				EQU 291 
 
 
 ;**** **** **** **** ****
@@ -2318,7 +2320,20 @@ MODE 	EQU 	2				; Choose mode. Set to 2 for multirotor
 $include (HTIRC_Hummingbird_30A_Pro.inc)	; Select HTIRC Hummingbird 30A Pro pinout
 ENDIF
 
+IF BESCNO == ALIGN_M460_Main
+MODE 	EQU 	0				; Choose mode. Set to 0 for main motor
+$include (ALIGN_M460.inc)	; Select Align M460 pinout
+ENDIF
 
+IF BESCNO == ALIGN_M460_Tail
+MODE 	EQU 	1				; Choose mode. Set to 1 for tail motor
+$include (ALIGN_M460.inc)	; Select Align M460 pinout
+ENDIF
+
+IF BESCNO == ALIGN_M460_Multi
+MODE 	EQU 	2				; Choose mode. Set to 2 for multirotor
+$include (ALIGN_M460.inc)	; Select Align M460 pinout
+ENDIF
 
 ;**** **** **** **** ****
 ; TX programming defaults
@@ -4222,7 +4237,7 @@ beep_anfet_off:
 	jnb	ACC.0, beep_cnfet_off
 	CnFET_off			; CnFET off
 beep_cnfet_off:
-	mov	A, #150		; 25µs off
+	mov	A, #150		; 25ï¿½s off
 	djnz	ACC, $		
 	djnz	Temp2, beep_onoff
 	; Copy variable
