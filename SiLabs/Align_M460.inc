@@ -283,3 +283,16 @@ MACRO Set_MCU_Clk_24MHz
 ENDM
 MACRO Set_MCU_Clk_48MHz
 ENDM
+; LED control
+Set_LED_0 MACRO
+	setb	P0.LED_w
+ENDM
+Clear_LED_0 MACRO
+	clr	P0.LED_w
+ENDM
+Set_LED_1 MACRO
+	setb	P0.LED_r
+ENDM
+Clear_LED_1 MACRO
+	clr	P0.LED_r
+ENDM
