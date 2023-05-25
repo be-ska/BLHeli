@@ -2409,6 +2409,7 @@ DEFAULT_PGM_ENABLE_TEMP_PROT	 	EQU 1 	; 1=Enabled 	0=Disabled
 DEFAULT_PGM_ENABLE_POWER_PROT 	EQU 1 	; 1=Enabled 	0=Disabled
 DEFAULT_PGM_ENABLE_PWM_INPUT	 	EQU 0 	; 1=Enabled 	0=Disabled
 DEFAULT_PGM_BRAKE_ON_STOP	 	EQU 0 	; 1=Enabled 	0=Disabled
+DEFAULT_PGM_LED_CONTROL	 			EQU 255 	; Byte for LED control. 2bits per LED, 0=Off, 1=On
 
 ;**** **** **** **** ****
 ; Constant definitions for main
@@ -2678,6 +2679,7 @@ Pgm_Enable_Power_Prot:		DS	1		; Programmed low rpm power protection enable
 Pgm_Enable_Pwm_Input:		DS	1		; Programmed PWM input signal enable
 Pgm_Pwm_Dither:			DS	1		; Programmed output PWM dither
 Pgm_Brake_On_Stop:			DS	1		; Programmed braking when throttle is zero
+Pgm_LED_Control:			DS	1		; Programmed LED control
 
 ; The sequence of the variables below is no longer of importance
 Pgm_Gov_P_Gain_Decoded:		DS	1		; Programmed governor decoded P gain
@@ -2738,6 +2740,7 @@ Eep_Pgm_Enable_Power_Prot:	DB	DEFAULT_PGM_ENABLE_POWER_PROT		; EEPROM copy of pr
 Eep_Pgm_Enable_Pwm_Input:	DB	DEFAULT_PGM_ENABLE_PWM_INPUT		; EEPROM copy of programmed PWM input signal enable
 _Eep_Pgm_Pwm_Dither:		DB	0FFh	
 Eep_Pgm_Brake_On_Stop:		DB	DEFAULT_PGM_BRAKE_ON_STOP		; EEPROM copy of programmed braking when throttle is zero
+Eep_Pgm_LED_Control:		DB	DEFAULT_PGM_LED_CONTROL			; EEPROM copy of programmed LED control
 ENDIF 
 
 IF MODE == 1
@@ -2778,6 +2781,7 @@ Eep_Pgm_Enable_Power_Prot:	DB	DEFAULT_PGM_ENABLE_POWER_PROT		; EEPROM copy of pr
 Eep_Pgm_Enable_Pwm_Input:	DB	DEFAULT_PGM_ENABLE_PWM_INPUT		; EEPROM copy of programmed PWM input signal enable
 Eep_Pgm_Pwm_Dither:			DB	DEFAULT_PGM_TAIL_PWM_DITHER		; EEPROM copy of programmed output PWM dither
 Eep_Pgm_Brake_On_Stop:		DB	DEFAULT_PGM_BRAKE_ON_STOP		; EEPROM copy of programmed braking when throttle is zero
+Eep_Pgm_LED_Control:		DB	DEFAULT_PGM_LED_CONTROL			; EEPROM copy of programmed LED control
 ENDIF
 
 IF MODE == 2
@@ -2818,6 +2822,7 @@ Eep_Pgm_Enable_Power_Prot:	DB	DEFAULT_PGM_ENABLE_POWER_PROT		; EEPROM copy of pr
 Eep_Pgm_Enable_Pwm_Input:	DB	DEFAULT_PGM_ENABLE_PWM_INPUT		; EEPROM copy of programmed PWM input signal enable
 Eep_Pgm_Pwm_Dither:			DB	DEFAULT_PGM_MULTI_PWM_DITHER		; EEPROM copy of programmed output PWM dither
 Eep_Pgm_Brake_On_Stop:		DB	DEFAULT_PGM_BRAKE_ON_STOP		; EEPROM copy of programmed braking when throttle is zero
+Eep_Pgm_LED_Control:		DB	DEFAULT_PGM_LED_CONTROL			; EEPROM copy of programmed LED control
 ENDIF
 
 Eep_Dummy:				DB	0FFh							; EEPROM address for safety reason
@@ -6765,6 +6770,8 @@ IF MODE == 0	; Main
 	mov	@Temp1, #0FFh	; Pwm dither
 	inc	Temp1
 	mov	@Temp1, #DEFAULT_PGM_BRAKE_ON_STOP
+	inc	Temp1
+	mov	@Temp1, #DEFAULT_PGM_LED_CONTROL
 ENDIF
 IF MODE == 1	; Tail
 	mov	Temp1, #Pgm_Gov_P_Gain
@@ -6838,6 +6845,8 @@ IF MODE == 1	; Tail
 	mov	@Temp1, #DEFAULT_PGM_TAIL_PWM_DITHER
 	inc	Temp1
 	mov	@Temp1, #DEFAULT_PGM_BRAKE_ON_STOP
+	inc	Temp1
+	mov	@Temp1, #DEFAULT_PGM_LED_CONTROL
 ENDIF
 IF MODE == 2	; Multi
 	mov	Temp1, #Pgm_Gov_P_Gain
@@ -6911,6 +6920,8 @@ IF MODE == 2	; Multi
 	mov	@Temp1, #DEFAULT_PGM_MULTI_PWM_DITHER
 	inc	Temp1
 	mov	@Temp1, #DEFAULT_PGM_BRAKE_ON_STOP
+	inc	Temp1
+	mov	@Temp1, #DEFAULT_PGM_LED_CONTROL
 ENDIF
 	ret
 
@@ -7170,6 +7181,66 @@ test_throttle_gain:
 
 ;**** **** **** **** **** **** **** **** **** **** **** **** ****
 ;
+; LED control
+;
+; No assumptions
+;
+; Controls LEDs
+;
+;**** **** **** **** **** **** **** **** **** **** **** **** ****
+led_control:
+	mov	Temp1, #Pgm_LED_Control
+	mov	A, @Temp1
+	mov	Temp2, A
+	anl	A, #03h
+	Set_LED_0
+	jnz	led_0_done
+	Clear_LED_0
+led_0_done:
+	mov	A, Temp2
+	anl	A, #0Ch
+	Set_LED_1
+	jnz	led_1_done
+	Clear_LED_1
+led_1_done:
+	mov	A, Temp2
+	anl	A, #030h
+	Set_LED_2
+	jnz	led_2_done
+	Clear_LED_2
+led_2_done:
+	mov	A, Temp2
+	anl	A, #0C0h
+	Set_LED_3
+	jnz	led_3_done
+	Clear_LED_3
+led_3_done:
+	ret
+
+
+;**** **** **** **** **** **** **** **** **** **** **** **** ****
+;
+; LED control from digital input
+;
+; No assumptions
+;
+; Controls LEDs
+;
+;**** **** **** **** **** **** **** **** **** **** **** **** ****
+led_digital_control:
+	mov A, P0
+	; Check the specific input bit, to generalize
+	anl	A, #04h
+	Set_LED_0
+	jnz	led_done
+	Clear_LED_0
+led_done:
+	ret
+
+
+
+;**** **** **** **** **** **** **** **** **** **** **** **** ****
+;
 ; Average throttle 
 ;
 ; Outputs result in Temp7
@@ -7359,6 +7430,7 @@ IF MODE <= 1	; Main or tail
 	call	wait200ms
 	call	wait100ms
 ENDIF
+	call	led_digital_control		; just after power on
 
 ;**** **** **** **** **** **** **** **** **** **** **** **** ****
 ;
@@ -7731,6 +7803,7 @@ wait_for_power_on:
 	mov	Power_On_Wait_Cnt_L, A	; Clear wait counter
 	mov	Power_On_Wait_Cnt_H, A	
 wait_for_power_on_loop:
+	call led_digital_control		; update LEDs
 	inc	Power_On_Wait_Cnt_L		; Increment low wait counter
 	mov	A, Power_On_Wait_Cnt_L
 	cpl	A
@@ -8044,7 +8117,8 @@ direct_start_check_rcp:
 
 
 normal_run_checks:
-	; Check if it is initial run phase
+	; Check if it is initial run phase and modify LEDs
+	call led_digital_control
 	jnb	Flags1.INITIAL_RUN_PHASE, initial_run_phase_done	; If not initial run phase - branch
 	jb	Flags1.DIR_CHANGE_BRAKE, initial_run_phase_done	; If a direction change - branch
 

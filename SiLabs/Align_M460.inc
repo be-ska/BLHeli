@@ -88,14 +88,14 @@ BpFET		EQU	6	;o high side B
 AnFET		EQU	5   ;o low side A
 ApFET 		EQU	4	;o high side A
 Rcp_In		EQU	3	;i
-;Rcp_In2	EQU 2	;i
+LED			EQU 2	;i
 LED_w		EQU 1	;o
 ;vref		EQU	0	;i	
 
-P0_DIGITAL	EQU 0FFh
-P0_INIT		EQU	NOT((1 SHL BnFET)+(1 SHL BpFET)+(1 SHL AnFET)+(1 SHL ApFET)+(1 SHL LED_w))	AND 0FFh
-P0_PUSHPULL	EQU	((1 SHL BnFET)+(1 SHL BpFET)+(1 SHL AnFET)+(1 SHL ApFET)+(1 SHL LED_w)) AND 0FFh	
-P0_SKIP		EQU	NOT(1 SHL Rcp_In) AND 0FFh
+P0_DIGITAL	EQU 0FFh ;P0MDIN
+P0_INIT		EQU	NOT((1 SHL BnFET)+(1 SHL BpFET)+(1 SHL AnFET)+(1 SHL ApFET)+(1 SHL LED_w))	AND 0FFh ;P0
+P0_PUSHPULL	EQU	((1 SHL BnFET)+(1 SHL BpFET)+(1 SHL AnFET)+(1 SHL ApFET)+(1 SHL LED_w)) AND 0FFh ;P0MDOUT
+P0_SKIP		EQU	NOT(1 SHL Rcp_In) AND 0FFh ;P0SKIP
 
 MACRO Get_Rcp_Capture_Values
 	mov	Temp1, PCA0CPL0			; Get PCA capture values
@@ -283,16 +283,24 @@ MACRO Set_MCU_Clk_24MHz
 ENDM
 MACRO Set_MCU_Clk_48MHz
 ENDM
-; LED control
+; LED control, only LED_0 and LED_1
 Set_LED_0 MACRO
-	setb	P0.LED_w
+	setb P0.LED_w
 ENDM
 Clear_LED_0 MACRO
 	clr	P0.LED_w
 ENDM
 Set_LED_1 MACRO
-	setb	P0.LED_r
+	setb P1.LED_r
 ENDM
 Clear_LED_1 MACRO
-	clr	P0.LED_r
+	clr	P1.LED_r
+ENDM
+Set_LED_2 MACRO
+ENDM
+Clear_LED_2 MACRO
+ENDM
+Set_LED_3 MACRO
+ENDM
+Clear_LED_3 MACRO
 ENDM
