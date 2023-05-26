@@ -59,6 +59,7 @@ ADC_LIMIT_L			EQU 	85	; Power supply measurement ADC value for which main motor 
 ADC_LIMIT_H			EQU	0	; Power supply measurement ADC value for which main motor power is limited (2 MSBs)
 TEMP_LIMIT			EQU 	109	; Temperature measurement ADC value for which main motor power is limited (low byte, assuming high byte is 1)
 TEMP_LIMIT_STEP		EQU	4	; Temperature measurement ADC value increment for which main motor power is further limited
+DIP_SWITCH			EQU 1	; DIP switch connected to low side FETs
 
 ;**** **** **** **** ****
 ; ESC specific defaults
@@ -83,19 +84,26 @@ SIGNATURE_002			EQU	030h
 ;*********************
 ; PORT 0 definitions *
 ;*********************  
-BnFET		EQU	7	;o low side B
+BnFET		EQU	7	;o low side B - DIP
 BpFET		EQU	6	;o high side B
-AnFET		EQU	5   ;o low side A
+AnFET		EQU	5   ;o low side A - DIP
 ApFET 		EQU	4	;o high side A
 Rcp_In		EQU	3	;i
 LED			EQU 2	;i
 LED_w		EQU 1	;o
 ;vref		EQU	0	;i	
 
-P0_DIGITAL	EQU 0FFh ;P0MDIN
-P0_INIT		EQU	NOT((1 SHL BnFET)+(1 SHL BpFET)+(1 SHL AnFET)+(1 SHL ApFET)+(1 SHL LED_w))	AND 0FFh ;P0
-P0_PUSHPULL	EQU	((1 SHL BnFET)+(1 SHL BpFET)+(1 SHL AnFET)+(1 SHL ApFET)+(1 SHL LED_w)) AND 0FFh ;P0MDOUT
+P0_DIGITAL	EQU	NOT((1 SHL BnFET)+(1 SHL AnFET)) AND 0FFh
+P0_INIT		EQU	NOT((1 SHL BpFET)+(1 SHL ApFET)+(1 SHL LED_w))	AND 0FFh
+P0_PUSHPULL	EQU	((1 SHL BpFET)+(1 SHL ApFET)+(1 SHL LED_w)) AND 0FFh
 P0_SKIP		EQU	NOT(1 SHL Rcp_In) AND 0FFh ;P0SKIP
+
+;init to see DIP switch
+P0_DIGITAL1		EQU 0FFh
+P0_INIT1		EQU	NOT((1 SHL BnFET)+(1 SHL BpFET)+(1 SHL AnFET)+(1 SHL ApFET)+(1 SHL LED_w))	AND 0FFh ;P0
+P0_PUSHPULL1	EQU	((1 SHL BnFET)+(1 SHL BpFET)+(1 SHL AnFET)+(1 SHL ApFET)+(1 SHL LED_w)) AND 0FFh ;P0MDOUT
+
+
 
 MACRO Get_Rcp_Capture_Values
 	mov	Temp1, PCA0CPL0			; Get PCA capture values
@@ -143,10 +151,14 @@ Mux_B		EQU	2	;i
 Comp_Com	EQU	1	;i
 Mux_A		EQU	0	;i
 
-P1_DIGITAL	EQU	NOT((1 SHL Mux_A)+(1 SHL Mux_B)+(1 SHL Comp_Com)+(1 SHL Mux_C)) AND 0FFh
-P1_INIT		EQU NOT((1 SHL CpFET)+(1 SHL CnFET)+(1 SHL LED_r)) AND 0FFh	
-P1_PUSHPULL	EQU	((1 SHL CpFET)+(1 SHL CnFET)+(1 SHL LED_r)) AND 0FFh	
+P1_DIGITAL	EQU	NOT((1 SHL Mux_A)+(1 SHL Mux_B)+(1 SHL Comp_Com)+(1 SHL Mux_C)+(1 SHL CnFET)) AND 0FFh
+P1_INIT		EQU NOT((1 SHL CpFET)+(1 SHL LED_r)) AND 0FFh	
+P1_PUSHPULL	EQU	((1 SHL CpFET)+(1 SHL LED_r)) AND 0FFh	
 P1_SKIP		EQU	0
+
+P1_DIGITAL1		EQU	NOT((1 SHL Mux_A)+(1 SHL Mux_B)+(1 SHL Comp_Com)+(1 SHL Mux_C)) AND 0FFh
+P1_INIT1		EQU NOT((1 SHL CpFET)+(1 SHL CnFET)+(1 SHL LED_r)) AND 0FFh	
+P1_PUSHPULL1	EQU	((1 SHL CpFET)+(1 SHL CnFET)+(1 SHL LED_r)) AND 0FFh	
 
 MACRO AnFET_on
 	setb	P0.AnFET
@@ -260,6 +272,17 @@ MACRO Initialize_Adc
 	mov	AMX0N, #11h	; Select negative input as ground
 	mov	ADC0CN, #80h	; ADC enabled
 ENDM
+
+MACRO Set_DIP_A
+	mov	AMX0P, #05h	; Set comparator multiplexer to phase A +P1.1-P1.0
+ENDM
+MACRO Set_DIP_B
+	mov	AMX0P, #07h	; Set comparator multiplexer to phase B +P1.1-P1.2
+ENDM
+MACRO Set_DIP_C
+	mov	AMX0P, #0Dh	; Set comparator multiplexer to phase C +P1.1-P1.4
+ENDM
+
 MACRO Set_Adc_Ip_Volt
 	mov	AMX0P, #(8+Mux_B)	; Select positive input (use comparator input B)
 ENDM
@@ -274,6 +297,7 @@ MACRO Read_Adc_Result
 	mov	Temp2, ADC0H
 ENDM
 MACRO Stop_Adc
+	mov	ADC0CN, #00h	; ADC stop
 ENDM
 MACRO Set_RPM_Out
 ENDM

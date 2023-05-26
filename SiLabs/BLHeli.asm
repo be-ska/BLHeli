@@ -2393,6 +2393,7 @@ DEFAULT_PGM_MULTI_PWM_FREQ	 	EQU 1 	; 1=High 		2=Low
 ENDIF
 DEFAULT_PGM_MULTI_DEMAG_COMP 		EQU 2 	; 1=Disabled	2=Low		3=High
 DEFAULT_PGM_MULTI_DIRECTION		EQU 1 	; 1=Normal 	2=Reversed	3=Bidirectional
+REVERSE_PGM_MULTI_DIRECTION		EQU 2
 DEFAULT_PGM_MULTI_RCP_PWM_POL 	EQU 1 	; 1=Positive 	2=Negative
 DEFAULT_PGM_MULTI_BEEP_STRENGTH	EQU 40	; Beep strength
 DEFAULT_PGM_MULTI_BEACON_STRENGTH	EQU 80	; Beacon strength
@@ -2409,7 +2410,7 @@ DEFAULT_PGM_ENABLE_TEMP_PROT	 	EQU 1 	; 1=Enabled 	0=Disabled
 DEFAULT_PGM_ENABLE_POWER_PROT 	EQU 1 	; 1=Enabled 	0=Disabled
 DEFAULT_PGM_ENABLE_PWM_INPUT	 	EQU 0 	; 1=Enabled 	0=Disabled
 DEFAULT_PGM_BRAKE_ON_STOP	 	EQU 0 	; 1=Enabled 	0=Disabled
-DEFAULT_PGM_LED_CONTROL	 			EQU 255 	; Byte for LED control. 2bits per LED, 0=Off, 1=On
+DEFAULT_PGM_LED_CONTROL	 			EQU 0 	; Byte for LED control. 2bits per LED, 0=Off, 1=On
 
 ;**** **** **** **** ****
 ; Constant definitions for main
@@ -2639,6 +2640,7 @@ DampingFET:				DS	1		; Port position of fet used for damping
 
 Flash_Key_1:				DS	1		; Flash key one
 Flash_Key_2:				DS	1		; Flash key two
+DIP_switch_var:				DS	1		; DIP switch position
 
 ; Indirect addressing data segment. The variables below must be in this sequence
 ISEG AT 080h					
@@ -7229,14 +7231,125 @@ led_3_done:
 ;**** **** **** **** **** **** **** **** **** **** **** **** ****
 led_digital_control:
 	mov A, P0
-	; Check the specific input bit, to generalize
 	anl	A, #04h
+	jnz	input_led_high_0
+	
+input_led_low_0:
+	mov A, DIP_switch_var
+	anl A, #01h
+	jz input_led_low_1
 	Set_LED_0
-	jnz	led_done
+
+input_led_low_1:
+	mov A, DIP_switch_var
+	anl A, #02h
+	jz led_done
+	Set_LED_1
+	jmp led_done
+
+input_led_high_0:
+	mov A, DIP_switch_var
+	anl A, #01h
+	jz input_led_high_1
 	Clear_LED_0
+
+input_led_high_1:
+	mov A, DIP_switch_var
+	anl A, #02h
+	jz led_done
+	Clear_LED_1
+
 led_done:
 	ret
 
+; led_digital_control:
+; 	mov A, P0
+; 	; Check the specific input bit, to generalize
+; 	anl	A, #04h
+; 	Set_LED_0
+; 	jnz	led_done
+; 	Clear_LED_0
+; led_done:
+; 	ret
+
+
+
+;**** **** **** **** **** **** **** **** **** **** **** **** ****
+;
+; Read DIP switch, just for Align ESC
+;
+; No assumptions
+;
+; Controls LEDs
+;
+;**** **** **** **** **** **** **** **** **** **** **** **** ****
+read_dip_switch:
+	mov DIP_switch_var, #00h
+	; Configure ADC and Analog Input
+	Set_DIP_A	;mov AMX0P, #05h
+	call wait1ms
+	; Start adc
+	Start_Adc 	;mov ADC0CN, #90h
+	; Wait for ADC reference to settle, and then start again
+	call	wait1ms
+	Start_Adc
+	; Wait for ADC conversion to complete
+measure_dip_A_adc:
+	jnb	AD0INT, measure_dip_A_adc
+	; Read ADC result
+	Read_Adc_Result
+	Stop_Adc
+	mov	A, Temp1
+	mov  Temp3, #20h         ; Set threshold value (e.g., 0.5V)
+	subb A, Temp3			; Is value below threshold?
+	jc dip_b
+	orl DIP_switch_var, #01h	;greater then threshold
+dip_b:
+	call wait30ms
+	; Configure ADC and Analog Input
+	Set_DIP_B
+	call wait1ms
+	; Start adc
+	Start_Adc 	;mov ADC0CN, #90h
+	; Wait for ADC reference to settle, and then start again
+	call	wait1ms
+	Start_Adc
+	; Wait for ADC conversion to complete
+measure_dip_B_adc:
+	jnb	AD0INT, measure_dip_B_adc
+	; Read ADC result
+	Read_Adc_Result
+	Stop_Adc
+	mov	A, Temp1
+	mov  Temp3, #20h         ; Set threshold value (e.g., 0.5V)
+	subb A, Temp3			; Is value below threshold?
+	jc dip_c
+	orl DIP_switch_var, #02h
+dip_c:
+	call wait30ms
+	; Configure ADC and Analog Input
+	Set_DIP_C
+	call wait1ms
+	; Start adc
+	Start_Adc 	;mov ADC0CN, #90h
+	; Wait for ADC reference to settle, and then start again
+	call	wait1ms
+	Start_Adc
+	; Wait for ADC conversion to complete
+measure_dip_C_adc:
+	jnb	AD0INT, measure_dip_C_adc
+	; Read ADC result
+	Read_Adc_Result
+	Stop_Adc
+	mov	A, Temp1
+	mov  Temp3, #20h      ; Set threshold value (e.g., 0.5V)
+	subb A, Temp3			; Is value below threshold?
+	jc dip_done
+	orl DIP_switch_var, #04h
+	mov	Temp1, #Pgm_Direction
+	mov	@Temp1, #REVERSE_PGM_MULTI_DIRECTION
+dip_done:
+	ret
 
 
 ;**** **** **** **** **** **** **** **** **** **** **** **** ****
@@ -7409,6 +7522,23 @@ clear_ram:
 	call	set_default_parameters
 	; Read all programmed parameters
 	call read_all_eeprom_parameters
+	; Initialize ADC
+	Initialize_Adc			; Initialize ADC operation
+	call	wait1ms
+	setb	EA				; Enable all interrupts
+		; Read DIP switch
+IF DIP_SWITCH == 1
+	call read_dip_switch
+	call	wait30ms
+	mov	P0, #P0_INIT1				
+	mov	P0MDOUT, #P0_PUSHPULL1
+	mov	P0MDIN, #P0_DIGITAL1
+	mov	P1, #P1_INIT1	
+	mov	P1MDOUT, #P1_PUSHPULL1
+	mov	P1MDIN, #P1_DIGITAL1
+	call	wait30ms
+	call led_digital_control
+ENDIF
 	; Set beep strength
 	mov	Temp1, #Pgm_Beep_Strength
 	mov	Beep_Strength, @Temp1
@@ -7430,7 +7560,6 @@ IF MODE <= 1	; Main or tail
 	call	wait200ms
 	call	wait100ms
 ENDIF
-	call	led_digital_control		; just after power on
 
 ;**** **** **** **** **** **** **** **** **** **** **** **** ****
 ;
@@ -7496,7 +7625,7 @@ ENDIF
 	; Initialize ADC
 	Initialize_Adc			; Initialize ADC operation
 	call	wait1ms
-	setb	EA				; Enable all interrupts
+	setb	EA
 	; Measure number of lipo cells
 	call Measure_Lipo_Cells			; Measure number of lipo cells
 	; Reset stall count
@@ -8118,7 +8247,7 @@ direct_start_check_rcp:
 
 normal_run_checks:
 	; Check if it is initial run phase and modify LEDs
-	call led_digital_control
+	;call led_digital_control
 	jnb	Flags1.INITIAL_RUN_PHASE, initial_run_phase_done	; If not initial run phase - branch
 	jb	Flags1.DIR_CHANGE_BRAKE, initial_run_phase_done	; If a direction change - branch
 
