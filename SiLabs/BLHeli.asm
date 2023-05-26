@@ -7262,18 +7262,6 @@ input_led_high_1:
 led_done:
 	ret
 
-; led_digital_control:
-; 	mov A, P0
-; 	; Check the specific input bit, to generalize
-; 	anl	A, #04h
-; 	Set_LED_0
-; 	jnz	led_done
-; 	Clear_LED_0
-; led_done:
-; 	ret
-
-
-
 ;**** **** **** **** **** **** **** **** **** **** **** **** ****
 ;
 ; Read DIP switch, just for Align ESC
