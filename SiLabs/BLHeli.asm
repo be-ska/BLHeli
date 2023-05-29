@@ -7262,6 +7262,7 @@ input_led_high_1:
 led_done:
 	ret
 
+
 ;**** **** **** **** **** **** **** **** **** **** **** **** ****
 ;
 ; Read DIP switch, just for Align ESC
@@ -7288,7 +7289,7 @@ measure_dip_A_adc:
 	Read_Adc_Result
 	Stop_Adc
 	mov	A, Temp1
-	mov  Temp3, #20h         ; Set threshold value (e.g., 0.5V)
+	mov  Temp3, #15h         ; Set threshold value (e.g., 0.5V)
 	subb A, Temp3			; Is value below threshold?
 	jc dip_b
 	orl DIP_switch_var, #01h	;greater then threshold
@@ -7309,7 +7310,7 @@ measure_dip_B_adc:
 	Read_Adc_Result
 	Stop_Adc
 	mov	A, Temp1
-	mov  Temp3, #20h         ; Set threshold value (e.g., 0.5V)
+	mov  Temp3, #15h         ; Set threshold value (e.g., 0.5V)
 	subb A, Temp3			; Is value below threshold?
 	jc dip_c
 	orl DIP_switch_var, #02h
@@ -7330,7 +7331,7 @@ measure_dip_C_adc:
 	Read_Adc_Result
 	Stop_Adc
 	mov	A, Temp1
-	mov  Temp3, #20h      ; Set threshold value (e.g., 0.5V)
+	mov  Temp3, #15h      ; Set threshold value (e.g., 0.5V)
 	subb A, Temp3			; Is value below threshold?
 	jc dip_done
 	orl DIP_switch_var, #04h
@@ -7525,7 +7526,8 @@ IF DIP_SWITCH == 1
 	mov	P1MDOUT, #P1_PUSHPULL1
 	mov	P1MDIN, #P1_DIGITAL1
 	call	wait30ms
-	call led_digital_control
+	Clear_LED_0
+	Clear_LED_1
 ENDIF
 	; Set beep strength
 	mov	Temp1, #Pgm_Beep_Strength
@@ -8235,7 +8237,7 @@ direct_start_check_rcp:
 
 normal_run_checks:
 	; Check if it is initial run phase and modify LEDs
-	;call led_digital_control
+	call led_digital_control
 	jnb	Flags1.INITIAL_RUN_PHASE, initial_run_phase_done	; If not initial run phase - branch
 	jb	Flags1.DIR_CHANGE_BRAKE, initial_run_phase_done	; If a direction change - branch
 
