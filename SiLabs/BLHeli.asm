@@ -7276,7 +7276,7 @@ read_dip_switch:
 	mov DIP_switch_var, #00h
 	; Configure ADC and Analog Input
 	Set_DIP_A	;mov AMX0P, #05h
-	call wait1ms
+	call wait10ms
 	; Start adc
 	Start_Adc 	;mov ADC0CN, #90h
 	; Wait for ADC reference to settle, and then start again
@@ -7288,20 +7288,23 @@ measure_dip_A_adc:
 	; Read ADC result
 	Read_Adc_Result
 	Stop_Adc
-	mov	A, Temp1
-	mov  Temp3, #15h         ; Set threshold value (e.g., 0.5V)
+	mov	A, Temp2
+	mov  Temp3, #01h         ; Set threshold value for HSB
 	subb A, Temp3			; Is value below threshold?
-	jc dip_b
+	jnc dip_b
+	mov	A, Temp1
+	mov  Temp4, #7Eh         ; Set threshold value for LSB (0.3V)
+	subb A, Temp4			; Is value below threshold?
+	jnc dip_b
 	orl DIP_switch_var, #01h	;greater then threshold
 dip_b:
-	call wait30ms
 	; Configure ADC and Analog Input
 	Set_DIP_B
-	call wait1ms
+	call wait10ms
 	; Start adc
 	Start_Adc 	;mov ADC0CN, #90h
 	; Wait for ADC reference to settle, and then start again
-	call	wait1ms
+	call wait1ms
 	Start_Adc
 	; Wait for ADC conversion to complete
 measure_dip_B_adc:
@@ -7309,20 +7312,21 @@ measure_dip_B_adc:
 	; Read ADC result
 	Read_Adc_Result
 	Stop_Adc
-	mov	A, Temp1
-	mov  Temp3, #15h         ; Set threshold value (e.g., 0.5V)
+	mov	A, Temp2
 	subb A, Temp3			; Is value below threshold?
-	jc dip_c
+	jnc dip_c
+	mov	A, Temp1
+	subb A, Temp4			; Is value below threshold?
+	jnc dip_c
 	orl DIP_switch_var, #02h
 dip_c:
-	call wait30ms
 	; Configure ADC and Analog Input
 	Set_DIP_C
-	call wait1ms
+	call wait30ms
 	; Start adc
 	Start_Adc 	;mov ADC0CN, #90h
 	; Wait for ADC reference to settle, and then start again
-	call	wait1ms
+	call wait1ms
 	Start_Adc
 	; Wait for ADC conversion to complete
 measure_dip_C_adc:
@@ -7330,14 +7334,19 @@ measure_dip_C_adc:
 	; Read ADC result
 	Read_Adc_Result
 	Stop_Adc
-	mov	A, Temp1
-	mov  Temp3, #15h      ; Set threshold value (e.g., 0.5V)
+	mov	A, Temp2
 	subb A, Temp3			; Is value below threshold?
-	jc dip_done
+	jnc dip_done
+	mov	A, Temp1
+	subb A, Temp4			; Is value below threshold?
+	jnc dip_done
 	orl DIP_switch_var, #04h
 	mov	Temp1, #Pgm_Direction
 	mov	@Temp1, #REVERSE_PGM_MULTI_DIRECTION
 dip_done:
+	mov A, DIP_switch_var   ; Move the value of 'var' into the accumulator
+	cpl A        ; Reverse every bit of the accumulator
+	mov DIP_switch_var, A   ; Move the reversed value back into 'var'
 	ret
 
 

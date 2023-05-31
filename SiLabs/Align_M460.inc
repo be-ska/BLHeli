@@ -91,9 +91,9 @@ ApFET 		EQU	4	;o high side A
 Rcp_In		EQU	3	;i
 LED			EQU 2	;i
 LED_w		EQU 1	;o
-;vref		EQU	0	;i	
+Vref		EQU	0	;o	
 
-P0_DIGITAL	EQU	NOT((1 SHL BnFET)+(1 SHL AnFET)) AND 0FFh
+P0_DIGITAL	EQU	NOT((1 SHL BnFET)+(1 SHL AnFET)+(1 SHL Vref)) AND 0FFh
 P0_INIT		EQU	NOT((1 SHL BpFET)+(1 SHL ApFET)+(1 SHL LED_w))	AND 0FFh
 P0_PUSHPULL	EQU	((1 SHL BpFET)+(1 SHL ApFET)+(1 SHL LED_w)) AND 0FFh
 P0_SKIP		EQU	NOT(1 SHL Rcp_In) AND 0FFh ;P0SKIP
@@ -266,7 +266,7 @@ MACRO Initialize_Xbar
 ENDM
 
 MACRO Initialize_Adc
-	mov	REF0CN, #0Eh	; Set vdd (3.3V) as reference. Enable temp sensor and bias
+	mov	REF0CN, #07h	; Set vdd (3.3V) as reference. Enable temp sensor and bias
 	mov	ADC0CF, #58h	; ADC clock 2MHz
 	mov	AMX0P, #(8+Mux_B)	; Select positive input (use comparator input B)
 	mov	AMX0N, #11h	; Select negative input as ground
@@ -297,7 +297,6 @@ MACRO Read_Adc_Result
 	mov	Temp2, ADC0H
 ENDM
 MACRO Stop_Adc
-	mov	ADC0CN, #00h	; ADC stop
 ENDM
 MACRO Set_RPM_Out
 ENDM
