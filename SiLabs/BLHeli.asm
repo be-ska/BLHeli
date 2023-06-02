@@ -7358,7 +7358,17 @@ dip_done:
 	cpl A        ; Reverse every bit of the accumulator
 	mov DIP_switch_var, A   ; Move the reversed value back into 'var'
 	
-	; ;continuous testing
+	; ;continuous testing DIP switch
+	; led01_set:
+	; mov A, DIP_switch_var
+	; anl A, #04h
+	; jz led0_set
+	; Set_LED_0
+	; Set_LED_1
+	; jmp led01_done
+	; led01_clear:
+	; Clear_LED_0
+	; Clear_LED_1
 	; led0_set:
 	; mov A, DIP_switch_var
 	; anl A, #01h
@@ -7372,11 +7382,11 @@ dip_done:
 	; anl A, #02h
 	; jz led1_clear
 	; Set_LED_1
-	; jmp led_done01
+	; jmp led01_done
 	; led1_clear:
 	; Clear_LED_1
-	; led_done01:
-	; jmp read_dip_switch
+	; led01_done:
+	; jmp read_dip_switch	;stuck here
 
 	ret
 
