@@ -7190,34 +7190,34 @@ test_throttle_gain:
 ; Controls LEDs
 ;
 ;**** **** **** **** **** **** **** **** **** **** **** **** ****
-led_control:
-	mov	Temp1, #Pgm_LED_Control
-	mov	A, @Temp1
-	mov	Temp2, A
-	anl	A, #03h
-	Set_LED_0
-	jnz	led_0_done
-	Clear_LED_0
-led_0_done:
-	mov	A, Temp2
-	anl	A, #0Ch
-	Set_LED_1
-	jnz	led_1_done
-	Clear_LED_1
-led_1_done:
-	mov	A, Temp2
-	anl	A, #030h
-	Set_LED_2
-	jnz	led_2_done
-	Clear_LED_2
-led_2_done:
-	mov	A, Temp2
-	anl	A, #0C0h
-	Set_LED_3
-	jnz	led_3_done
-	Clear_LED_3
-led_3_done:
-	ret
+; led_control:
+; 	mov	Temp1, #Pgm_LED_Control
+; 	mov	A, @Temp1
+; 	mov	Temp2, A
+; 	anl	A, #03h
+; 	Set_LED_0
+; 	jnz	led_0_done
+; 	Clear_LED_0
+; led_0_done:
+; 	mov	A, Temp2
+; 	anl	A, #0Ch
+; 	Set_LED_1
+; 	jnz	led_1_done
+; 	Clear_LED_1
+; led_1_done:
+; 	mov	A, Temp2
+; 	anl	A, #030h
+; 	Set_LED_2
+; 	jnz	led_2_done
+; 	Clear_LED_2
+; led_2_done:
+; 	mov	A, Temp2
+; 	anl	A, #0C0h
+; 	Set_LED_3
+; 	jnz	led_3_done
+; 	Clear_LED_3
+; led_3_done:
+; 	ret
 
 
 ;**** **** **** **** **** **** **** **** **** **** **** **** ****
@@ -7273,10 +7273,19 @@ led_done:
 ;
 ;**** **** **** **** **** **** **** **** **** **** **** **** ****
 read_dip_switch:
+	; default values
 	mov DIP_switch_var, #00h
+	mov	Temp1, #Pgm_Direction
+	mov	@Temp1, #DEFAULT_PGM_MULTI_DIRECTION
+	mov A, #01h
+	mov  Temp3, A          ; Set threshold value for HSB
+	mov A, #07Eh 
+	mov Temp4, A        ; Set threshold value for LSB (0.3V)
+	call wait100ms
+
 	; Configure ADC and Analog Input
 	Set_DIP_A	;mov AMX0P, #05h
-	call wait10ms
+	call wait30ms
 	; Start adc
 	Start_Adc 	;mov ADC0CN, #90h
 	; Wait for ADC reference to settle, and then start again
@@ -7285,22 +7294,21 @@ read_dip_switch:
 	; Wait for ADC conversion to complete
 measure_dip_A_adc:
 	jnb	AD0INT, measure_dip_A_adc
+	call wait1ms
 	; Read ADC result
 	Read_Adc_Result
 	Stop_Adc
 	mov	A, Temp2
-	mov  Temp3, #01h         ; Set threshold value for HSB
-	subb A, Temp3			; Is value below threshold?
+	subb A, Temp3			; Is value below threshold? Don't jump
 	jnc dip_b
 	mov	A, Temp1
-	mov  Temp4, #7Eh         ; Set threshold value for LSB (0.3V)
-	subb A, Temp4			; Is value below threshold?
+	subb A, Temp4			; Is value still below threshold? Don't jump and update DIP_switch_var
 	jnc dip_b
-	orl DIP_switch_var, #01h	;greater then threshold
+	orl DIP_switch_var, #01h
 dip_b:
 	; Configure ADC and Analog Input
 	Set_DIP_B
-	call wait10ms
+	call wait30ms
 	; Start adc
 	Start_Adc 	;mov ADC0CN, #90h
 	; Wait for ADC reference to settle, and then start again
@@ -7309,6 +7317,7 @@ dip_b:
 	; Wait for ADC conversion to complete
 measure_dip_B_adc:
 	jnb	AD0INT, measure_dip_B_adc
+	call wait1ms
 	; Read ADC result
 	Read_Adc_Result
 	Stop_Adc
@@ -7331,6 +7340,7 @@ dip_c:
 	; Wait for ADC conversion to complete
 measure_dip_C_adc:
 	jnb	AD0INT, measure_dip_C_adc
+	call wait1ms
 	; Read ADC result
 	Read_Adc_Result
 	Stop_Adc
@@ -7347,6 +7357,27 @@ dip_done:
 	mov A, DIP_switch_var   ; Move the value of 'var' into the accumulator
 	cpl A        ; Reverse every bit of the accumulator
 	mov DIP_switch_var, A   ; Move the reversed value back into 'var'
+	
+	; ;continuous testing
+	; led0_set:
+	; mov A, DIP_switch_var
+	; anl A, #01h
+	; jz led0_clear
+	; Set_LED_0
+	; jmp led1_set
+	; led0_clear:
+	; Clear_LED_0
+	; led1_set:
+	; mov A, DIP_switch_var
+	; anl A, #02h
+	; jz led1_clear
+	; Set_LED_1
+	; jmp led_done01
+	; led1_clear:
+	; Clear_LED_1
+	; led_done01:
+	; jmp read_dip_switch
+
 	ret
 
 
