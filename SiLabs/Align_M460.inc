@@ -266,6 +266,14 @@ MACRO Initialize_Xbar
 ENDM
 
 MACRO Initialize_Adc
+	mov	REF0CN, #0Eh	; Set vdd (3.3V) as reference. Enable temp sensor and bias
+	mov	ADC0CF, #58h	; ADC clock 2MHz
+	mov	AMX0P, #(8+Mux_B)	; Select positive input (use comparator input B)
+	mov	AMX0N, #11h	; Select negative input as ground
+	mov	ADC0CN, #80h	; ADC enabled
+ENDM
+
+MACRO Initialize_Adc_DIP
 	mov	REF0CN, #07h	; Set vdd (3.3V) as reference. Enable temp sensor and bias
 	mov	ADC0CF, #58h	; ADC clock 2MHz
 	mov	AMX0P, #(8+Mux_B)	; Select positive input (use comparator input B)

@@ -7562,7 +7562,7 @@ clear_ram:
 	; Read all programmed parameters
 	call read_all_eeprom_parameters
 	; Initialize ADC
-	Initialize_Adc			; Initialize ADC operation
+	Initialize_Adc_DIP			; Initialize ADC operation
 	call	wait1ms
 	setb	EA				; Enable all interrupts
 		; Read DIP switch
