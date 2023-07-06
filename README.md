@@ -41,6 +41,7 @@ To flash:
 1. Plug in the battery to power the ESC.
 1. Go to "Silabs ESC setup" and click "Flash others".
 
+![Align M460 program pinout](/SiLabs/Align_M460_pins.png)
 
 ## BLheli defaul README
 
