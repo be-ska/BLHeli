@@ -29,13 +29,13 @@ To flash:
 1. Plug in your Arduino, a new COM port should appear. Pick the Arduino COM port in BLHeliSuite.
 1. Go to the “Make Interfaces” tab, select your Arduino board and click on “Arduino 4way-interface” option.
     - for Arduino Nano choose the one that contains “PD3PD2” and follow this connection: 
-        - GND -> GND
-        - D2 -> C2D 
-        - D3 -> C2CK
+        - GND -> GND (black)
+        - D2 -> C2D (white)
+        - D3 -> C2CK (red) 
     - Arduino Uno or general choose the one that contains “PB3PB4” and follow this connection::
-        - GND -> GND
-        - D12 -> C2D
-        - D11 -> C2CK
+        - GND -> GND (black)
+        - D12 -> C2D (white)
+        - D11 -> C2CK (red)
 1. Connect the ESC following the attached schematic.
 1. In BLHeliSuite, select “SILAB C2 (4way-if)” under SILABS Interface.
 1. Plug in the battery to power the ESC.
