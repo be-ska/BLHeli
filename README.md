@@ -19,7 +19,8 @@ This branch add the support for Align M460 ESC, adding the following feature:
     - Rkit-51 toolchain.
 1. Main code is at `/SiLabs/BLHeli.asm``
 1. Hardware specification at `/SiLabs/Align_M460.inc`
-1. To build only for Align M460 just execute `/SiLabs/MakeHexfiles.bat`
+1. To build only for Align M460 just execute `/SiLabs/MakeHexfiles_M460.bat`
+1. binary file in /Silabs/Output/Hex
 1. Default M460 firmware under `/SiLabs/Hex files Align/`
 
 ### Flash ESC
